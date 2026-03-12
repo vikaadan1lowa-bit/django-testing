@@ -41,25 +41,20 @@ def test_news_sorted_by_date(client):
     assert all_dates == sorted_dates
 
 
-@pytest.fixture
-def author(django_user_model):
-    return django_user_model.objects.create(username='Комментатор')
-
-
 @pytest.mark.django_db
-def test_comments_order(client, news, author):
+def test_comments_order(news, author_client):
     """Комментарии на странице новости отсортированы по возрастанию."""
     now = timezone.now()
     for i in range(10):
         comment = Comment.objects.create(
             news=news,
-            author=author,
+            author=author_client.user,
             text=f'Комментарий {i}'
         )
         comment.created = now + timedelta(days=1)
         comment.save()
     url = reverse('news:detail', args=(news.id,))
-    response = client.get(url)
+    response = author_client.get(url)
     news_obj = response.context['news']
     all_comments = news_obj.comment_set.all()
     all_timestamps = [comment.created for comment in all_comments]

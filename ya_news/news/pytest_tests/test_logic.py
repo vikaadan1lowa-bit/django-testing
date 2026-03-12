@@ -33,7 +33,7 @@ def test_authorized_user_can_create_comment(
     assert Comment.objects.count() == 1
     comment = Comment.objects.get()
     assert comment.text == form_data['text']
-    assert comment.author == author
+    assert comment.author == author_client.user
     assert comment.news == news
 
 
