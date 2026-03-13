@@ -45,10 +45,12 @@ class TestNoteLogic(TestCase):
 
     def test_anonymous_cannot_create_note(self):
         """Анонимный пользователь не может создать заметку"""
-        response = self.client.post(self.add_url, data=self.form_data)
-        self.assertNotEqual(response.status_code, HTTPStatus.FOUND)
-        notes_count = Note.objects.count()
-        self.assertEqual(notes_count, 0)
+        url = reverse('notes:add')
+        response = self.client.post(url, data=self.form_data)
+        login_url = reverse('users:login')
+        expected_url = f'{login_url}?next={self.add_url}'
+        self.assertRedirects(response, expected_url)
+        self.assertEqual(Note.objects.count(), 0)
 
     def test_cannot_create_two_notes_with_same_slug(self):
         """Нельзя создать две заметки с одинаковым slug"""

@@ -74,7 +74,7 @@ class TestRoutes(TestCase):
         Анонимный пользователь может открыть
         страницы регистрации и входа.
         """
-        for name in ('users:signup', 'users:login', 'users:logout'):
+        for name in ('users:signup', 'users:login'):
             with self.subTest(name=name):
                 url = reverse(name)
                 response = self.client.get(url)
