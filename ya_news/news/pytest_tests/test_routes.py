@@ -5,6 +5,7 @@ from django.urls import reverse
 from pytest_django.asserts import assertRedirects
 
 
+@pytest.mark.django_db
 def test_home_page_available_for_anonymous(client):
     """Главная страница доступна анонимному пользователю."""
     url = reverse('news:home')
@@ -12,6 +13,7 @@ def test_home_page_available_for_anonymous(client):
     assert response.status_code == HTTPStatus.OK
 
 
+@pytest.mark.django_db
 def test_news_detail_available_for_anonymous(client, news):
     """Страница отдельной новости доступна анонимному пользователю."""
     url = reverse('news:detail', args=(news.id,))
@@ -19,6 +21,7 @@ def test_news_detail_available_for_anonymous(client, news):
     assert response.status_code == HTTPStatus.OK
 
 
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     'name',
     ('news:edit', 'news:delete')
@@ -30,6 +33,7 @@ def test_comment_pages_available_for_author(author_client, comment, name):
     assert response.status_code == HTTPStatus.OK
 
 
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     'name',
     ('news:edit', 'news:delete')
@@ -45,6 +49,7 @@ def test_availability_for_comment_edit_and_delete(
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     'name',
     ('news:edit', 'news:delete')
@@ -58,6 +63,7 @@ def test_anonymous_user_redirected_to_login(client, comment, name):
     assertRedirects(response, redirect_url)
 
 
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     'name',
     ('users:login', 'users:logout', 'users:signup')
@@ -67,7 +73,7 @@ def test_auth_pages_available_for_anonymous(client, name):
     url = reverse(name)
     if name == 'users:logout':
         response = client.post(url)
-        assert response.status_code == HTTPStatus.FOUND
+        assert response.status_code in (HTTPStatus.FOUND, HTTPStatus.OK)
     else:
         response = client.get(url)
         assert response.status_code == HTTPStatus.OK

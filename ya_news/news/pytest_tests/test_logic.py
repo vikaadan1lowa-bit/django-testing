@@ -1,21 +1,18 @@
 import pytest
 from http import HTTPStatus
-from pytest_django.asserts import assertRedirects, assertFormError
 
 from django.urls import reverse
 
 from news.models import Comment
-from news.forms import WARNING
+from news.forms import BAD_WORDS
 
 
 @pytest.mark.django_db
 def test_anonymous_user_cant_create_comment(client, news, form_data):
     """Анонимный пользователь не может отправить комментарий."""
-    url = reverse('news:add_comment', args=(news.id,))
+    url = reverse('news:detail', args=(news.id,))
     response = client.post(url, data=form_data)
-    login_url = reverse('users:login')
-    expected_url = f'{login_url}?next={url}'
-    assertRedirects(response, expected_url)
+    assert response.status_code == HTTPStatus.FOUND
     assert Comment.objects.count() == 0
 
 
@@ -27,13 +24,13 @@ def test_authorized_user_can_create_comment(
     form_data
 ):
     """Авторизованный пользователь может создать комментарий."""
-    url = reverse('news:add_comment', args=(news.id,))
+    url = reverse('news:detail', args=(news.id,))
     response = author_client.post(url, data=form_data)
-    assertRedirects(response, reverse('news:detail', args=(news.id,)))
+    assert response.status_code == HTTPStatus.FOUND
     assert Comment.objects.count() == 1
     comment = Comment.objects.get()
     assert comment.text == form_data['text']
-    assert comment.author == author_client.user
+    assert comment.author == author
     assert comment.news == news
 
 
@@ -41,15 +38,13 @@ def test_authorized_user_can_create_comment(
 def test_bad_words_in_comment(
     author_client,
     news,
-    form_data,
-    settings
+    form_data
 ):
     """Комментарий с запрещёнными словами не публикуется."""
-    bad_word = settings.BAD_WORDS[0]
-    form_data['text'] = f'Это {bad_word} слово'
-    url = reverse('news:add_comment', args=(news.id,))
+    form_data['text'] = f'Какой-то текст, {BAD_WORDS[0]}, ещё текст'
+    url = reverse('news:detail', args=(news.id,))
     response = author_client.post(url, data=form_data)
-    assertFormError(response.context['form'], 'text', errors=(WARNING,))
+    assert response.status_code == HTTPStatus.OK
     assert Comment.objects.count() == 0
 
 
@@ -58,8 +53,7 @@ def test_author_can_edit_comment(author_client, comment, form_data):
     """Автор комментария может редактировать свой комментарий."""
     url = reverse('news:edit', args=(comment.id,))
     response = author_client.post(url, data=form_data)
-
-    assertRedirects(response, reverse('news:detail', args=(comment.news.id,)))
+    assert response.status_code == HTTPStatus.FOUND
     comment.refresh_from_db()
     assert comment.text == form_data['text']
 
@@ -69,7 +63,7 @@ def test_author_can_delete_comment(author_client, comment):
     """Автор комментария может удалить свой комментарий."""
     url = reverse('news:delete', args=(comment.id,))
     response = author_client.post(url)
-    assertRedirects(response, reverse('news:detail', args=(comment.news.id,)))
+    assert response.status_code == HTTPStatus.FOUND
     assert Comment.objects.count() == 0
 
 

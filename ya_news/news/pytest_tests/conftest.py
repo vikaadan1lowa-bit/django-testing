@@ -68,3 +68,11 @@ def reader_client(django_user_model):
     client = Client()
     client.force_login(user)
     return client
+
+
+@pytest.fixture
+def form_data():
+    """Данные для создания/редактирования комментария."""
+    return {
+        'text': 'Тестовый комментарий'
+    }

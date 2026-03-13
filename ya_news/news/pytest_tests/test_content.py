@@ -4,8 +4,8 @@ from django.urls import reverse
 from django.conf import settings
 from django.utils import timezone
 from datetime import datetime, timedelta
-from news.forms import CommentForm
 from news.models import Comment, News
+from django.test import Client
 
 
 @pytest.mark.django_db
@@ -42,36 +42,39 @@ def test_news_sorted_by_date(client):
 
 
 @pytest.mark.django_db
-def test_comments_order(news, author_client):
+def test_comments_order(news, author):
     """Комментарии на странице новости отсортированы по возрастанию."""
     now = timezone.now()
     for i in range(10):
         comment = Comment.objects.create(
             news=news,
-            author=author_client.user,
+            author=author,
             text=f'Комментарий {i}'
         )
-        comment.created = now + timedelta(days=1)
+        comment.created = now + timedelta(days=i)
         comment.save()
     url = reverse('news:detail', args=(news.id,))
-    response = author_client.get(url)
+    client = Client()
+    response = client.get(url)
     news_obj = response.context['news']
     all_comments = news_obj.comment_set.all()
     all_timestamps = [comment.created for comment in all_comments]
     assert all_timestamps == sorted(all_timestamps)
 
 
-@pytest.mark.parametrize(
-    'parametrized_client, form_in_context',
-    (
-        (pytest.lazy_fixture('client'), False),
-        (pytest.lazy_fixture('author_client'), True),
-    )
-)
-def test_comment_form_availability(news, parametrized_client, form_in_context):
-    """Форма комментария доступна только авторизованному пользователю."""
+@pytest.mark.django_db
+def test_comment_form_not_available_for_anonymous(client, news):
+    """Форма комментария не доступна анонимному пользователю."""
     url = reverse('news:detail', args=(news.id,))
-    response = parametrized_client.get(url)
-    assert ('form' in response.context) is form_in_context
-    if form_in_context:
-        assert isinstance(response.context['form'], CommentForm)
+    response = client.get(url)
+    assert 'form' not in response.context
+
+
+@pytest.mark.django_db
+def test_comment_form_available_for_author(author_client, news):
+    """Форма комментария доступна авторизованному пользователю."""
+    url = reverse('news:detail', args=(news.id,))
+    response = author_client.get(url)
+    assert 'form' in response.context
+    from news.forms import CommentForm
+    assert isinstance(response.context['form'], CommentForm)
