@@ -7,8 +7,9 @@ from pytest_lazyfixture import lazy_fixture
 from django.urls import reverse
 
 
-pytestmark = pytest.mark.django_db
-
+CLIENT = lazy_fixture('client')
+AUTHOR_CLIENT = lazy_fixture('author_client')
+NOT_AUTHOR_CLIENT = lazy_fixture('not_author_client')
 
 HOME_URL = lazy_fixture('home_url')
 DETAIL_URL = lazy_fixture('detail_url')
@@ -19,15 +20,20 @@ DELETE_URL = lazy_fixture('delete_url')
 @pytest.mark.parametrize(
     'client_fixture, url, expected_status',
     [
-        (lazy_fixture('client'), HOME_URL, HTTPStatus.OK),
-        (lazy_fixture('client'), DETAIL_URL, HTTPStatus.OK),
-        (lazy_fixture('client'), EDIT_URL, HTTPStatus.NOT_FOUND),
-        (lazy_fixture('client'), DELETE_URL, HTTPStatus.NOT_FOUND),
+        (CLIENT, HOME_URL, HTTPStatus.OK),
+        (CLIENT, DETAIL_URL, HTTPStatus.OK),
+        (CLIENT, EDIT_URL, HTTPStatus.NOT_FOUND),
+        (CLIENT, DELETE_URL, HTTPStatus.NOT_FOUND),
 
-        (lazy_fixture('author_client'), HOME_URL, HTTPStatus.OK),
-        (lazy_fixture('author_client'), DETAIL_URL, HTTPStatus.OK),
-        (lazy_fixture('author_client'), EDIT_URL, HTTPStatus.OK),
-        (lazy_fixture('author_client'), DELETE_URL, HTTPStatus.OK),
+        (AUTHOR_CLIENT, HOME_URL, HTTPStatus.OK),
+        (AUTHOR_CLIENT, DETAIL_URL, HTTPStatus.OK),
+        (AUTHOR_CLIENT, EDIT_URL, HTTPStatus.OK),
+        (AUTHOR_CLIENT, DELETE_URL, HTTPStatus.OK),
+
+        (NOT_AUTHOR_CLIENT, HOME_URL, HTTPStatus.OK),
+        (NOT_AUTHOR_CLIENT, DETAIL_URL, HTTPStatus.OK),
+        (NOT_AUTHOR_CLIENT, EDIT_URL, HTTPStatus.OK),
+        (NOT_AUTHOR_CLIENT, DELETE_URL, HTTPStatus.OK),
     ]
 )
 def universal_test_pages_status(client_fixture, url, expected_status):
@@ -41,7 +47,7 @@ def universal_test_pages_status(client_fixture, url, expected_status):
 
 @pytest.mark.parametrize(
     'url_name',
-    (EDIT_URL, DELETE_URL)
+    ('news:edit', 'news:delete')
 )
 def test_anonymous_user_redirected_to_login(client, comment, url_name):
     """Анонимный пользователь перенаправляется на страницу входа."""

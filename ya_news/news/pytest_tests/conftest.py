@@ -1,10 +1,10 @@
-import pytest
-
 from datetime import timedelta
 
+import pytest
 from django.conf import settings
 from django.test import Client
 from django.utils import timezone
+from django.urls import reverse
 
 from news.models import News, Comment
 
@@ -17,22 +17,22 @@ def enable_db_access_for_all_tests(db):
 
 @pytest.fixture
 def home_url():
-    return 'news:home'
+    return reverse('news:home')
 
 
 @pytest.fixture
-def detail_url():
-    return 'news:detail'
+def detail_url(news):
+    return reverse('news:detail', args=(news.id,))
 
 
 @pytest.fixture
-def edit_url():
-    return 'news:edit'
+def edit_url(comment):
+    return reverse('news:edit', args=(comment.id,))
 
 
 @pytest.fixture
-def delete_url():
-    return 'news:delete'
+def delete_url(comment):
+    return reverse('news:delete', args=(comment.id,))
 
 
 @pytest.fixture
@@ -93,7 +93,7 @@ def comment(news, author):
 def form_data():
     """Данные для создания/редактирования комментария."""
     return {
-        'text': 'Тестовый комментарий'
+        'text': 'Обновлённый комментарий'
     }
 
 
@@ -110,18 +110,19 @@ def news_list():
         for i in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
     ]
     News.objects.bulk_create(news_objects)
-    return News.objects.all()
 
 
 @pytest.fixture
 def comments(news, author):
     """Создаёт 10 комментариев к новости."""
     comment_list = []
+    now = timezone.now()
     for i in range(10):
         comment = Comment.objects.create(
             news=news,
             author=author,
             text=f'Комментарий {i}',
         )
+        comment.created = now - timedelta(days=i)
+        comment.save()
         comment_list.append(comment)
-    return comment_list

@@ -3,7 +3,7 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from .test_content import BaseNoteTest
+from .conftest import BaseNoteTest
 
 User = get_user_model()
 
@@ -13,7 +13,6 @@ class TestRoutes(BaseNoteTest):
 
     def test_pages_available_for_authenticated_user(self):
         """Авторизованный пользователь может открыть страницы приложения."""
-        self.client.force_login(self.author)
         urls = [
             self.LIST_URL,
             self.ADD_URL,
@@ -23,7 +22,7 @@ class TestRoutes(BaseNoteTest):
         ]
         for url in urls:
             with self.subTest(url=url):
-                response = self.client.get(url)
+                response = self.author_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def common_test_pages_status(self):
