@@ -90,12 +90,13 @@ class TestNoteLogic(BaseNoteTest):
     def test_author_can_edit_note(self):
         """Автор заметки может редактировать свою заметку."""
         note_before = Note.objects.get(id=self.note.id)
+        self.form_data['slug'] = 'new-slug'
         response = self.author_client.post(self.EDIT_URL, data=self.form_data)
         self.assertRedirects(response, self.SUCCESS_URL)
         note_after = Note.objects.get(id=self.note.id)
         self.assertEqual(note_after.text, self.form_data['text'])
         self.assertEqual(note_after.title, self.form_data['title'])
-        self.assertEqual(note_after.slug, self.NOTE_SLUG)
+        self.assertEqual(note_after.slug, self.form_data['slug'])
         self.assertEqual(note_after.author, note_before.author)
 
     def test_user_cant_edit_note_of_another_user(self):
@@ -106,5 +107,5 @@ class TestNoteLogic(BaseNoteTest):
         note_after = Note.objects.get(id=self.note.id)
         self.assertEqual(note_after.text, note_before.text)
         self.assertEqual(note_after.title, note_before.title)
-        self.assertEqual(note_after.slug, self.NOTE_SLUG)
+        self.assertEqual(note_after.slug, note_before.slug)
         self.assertEqual(note_after.author, note_before.author)

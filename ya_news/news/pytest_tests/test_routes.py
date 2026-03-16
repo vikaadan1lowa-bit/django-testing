@@ -32,8 +32,8 @@ DELETE_URL = lazy_fixture('delete_url')
 
         (NOT_AUTHOR_CLIENT, HOME_URL, HTTPStatus.OK),
         (NOT_AUTHOR_CLIENT, DETAIL_URL, HTTPStatus.OK),
-        (NOT_AUTHOR_CLIENT, EDIT_URL, HTTPStatus.OK),
-        (NOT_AUTHOR_CLIENT, DELETE_URL, HTTPStatus.OK),
+        (NOT_AUTHOR_CLIENT, EDIT_URL, HTTPStatus.NOT_FOUND),
+        (NOT_AUTHOR_CLIENT, DELETE_URL, HTTPStatus.NOT_FOUND),
     ]
 )
 def universal_test_pages_status(client_fixture, url, expected_status):
@@ -46,13 +46,12 @@ def universal_test_pages_status(client_fixture, url, expected_status):
 
 
 @pytest.mark.parametrize(
-    'url_name',
-    ('news:edit', 'news:delete')
+    'url',
+    (EDIT_URL, DELETE_URL)
 )
-def test_anonymous_user_redirected_to_login(client, comment, url_name):
+def test_anonymous_user_redirected_to_login(client, comment, url):
     """Анонимный пользователь перенаправляется на страницу входа."""
     login_url = reverse('users:login')
-    url = reverse(url_name, args=(comment.id,))
     redirect_url = f'{login_url}?next={url}'
     response = client.get(url)
     assertRedirects(response, redirect_url)

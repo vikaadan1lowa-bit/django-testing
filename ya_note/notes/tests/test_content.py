@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
-from .conftest import BaseNoteTest
 
 from notes.forms import NoteForm
+
+from .conftest import BaseNoteTest
 
 User = get_user_model()
 
